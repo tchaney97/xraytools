@@ -1,7 +1,11 @@
 
 # xraytools
 
-**xraytools** is a Python module designed to assist in X-ray scattering and spectroscopy calculations. It includes functions for calculating sample-to-detector distances, scattering vector ranges, critical angles, attenuation coefficients, transmission through materials, and more. This toolkit is particularly useful for researchers and engineers working with X-ray characterization techniques.
+**xraytools** is a Python module I created to assist in my X-ray scattering experiment planning. It includes functions for calculating sample-to-detector distances, scattering vector ranges, critical angles, attenuation coefficients, transmission through materials, and more. I hope you also find it useful.
+
+Here are some example outputs from xraytools: 
+![plot](example_outputs/example_plot.png)
+![table](example_outputs/example_table.png)
 
 ## Features
 
@@ -17,6 +21,22 @@ Clone the repository and import the module into your Python project:
 
 ```bash
 git clone https://github.com/yourusername/xraytools.git
+```
+
+## Requirements
+
+To use the `xraytools` module, you'll need to have the following prerequisites:
+
+- **Python 3.6+**: The module requires Python 3.6 or higher.
+- **NumPy**: For numerical computations.
+- **PrettyTable**: For displaying tables in a readable format.
+- **Matplotlib** (optional): For plotting data visualizations, if required.
+- **xraydb**: For X-ray spectroscopy data.
+
+To install the required packages, you can use the following command:
+
+```bash
+pip install numpy PrettyTable matplotlib xraydb
 ```
 
 ## Usage
@@ -147,14 +167,6 @@ Calculates the transmission of X-rays through a solution in a capillary, account
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Contributing
-
-We welcome contributions to xraytools! Please open an issue or submit a pull request on GitHub. For major changes, please open an issue first to discuss what you would like to change.
-
-## Acknowledgements
-
-This project was inspired by the need for comprehensive X-ray scattering and spectroscopy tools in Python. We would like to thank all contributors and the open-source community for their support.
-
 ---
 
-Feel free to contact us with any questions or suggestions. Happy scattering!
+Feel free to contact me with any questions or suggestions. Happy scattering!
