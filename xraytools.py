@@ -142,8 +142,8 @@ def calc_xefi(energy,
               sub_stoichiometry, 
               sub_density,
               sampthick, 
-              incidentang, 
-              incidentang_extent):
+              incidentangs,
+              plot=False):
     """
     Calculate the X-ray Electric Field Intensity (XEFI) throughout a thin film's depth. Assumes one material \
     and zero surface roughness. 
@@ -178,12 +178,7 @@ def calc_xefi(energy,
     lambda_angstrom = (h * c) / (energy * eV_to_J) * 1e10  # Wavelength in Angstroms
     sampthick_angstrom = sampthick * 10  # Convert thickness from nm to Angstroms
     
-    # Resampling angles for around set angle and extent
-    incidentang = np.deg2rad(incidentang)
-    min_angle = np.min(incidentang) * 180 / np.pi - incidentang_extent
-    max_angle = np.max(incidentang) * 180 / np.pi + incidentang_extent
-    angresamp = np.linspace(min_angle, max_angle, 1000) * np.pi / 180
-    stepsize = np.min(np.diff(angresamp))
+    angresamp = incidentangs * np.pi / 180
     
     # Define wavevectors
     k0 = 2 * np.pi / lambda_angstrom
@@ -214,6 +209,35 @@ def calc_xefi(energy,
     # Calculate electric field intensity
     EE = (1 + r01) * (np.exp(1j * kz1 * z) + r12 * np.exp(1j * kz1 * (2 * sampthick_angstrom - z))) / \
          (1 + r01 * r12 * np.exp(1j * 2 * kz1 * sampthick_angstrom))
+    
+    if plot:
+        xefi_mag = np.abs(EE.T)  # Electric field is complex, get magnitude
+        depth = z.flatten()/10
+        aois = np.rad2deg(angresamp)
+
+        # Quick plot check 
+        cmin = np.quantile(xefi_mag, 0.05)
+        cmax = np.quantile(xefi_mag, 1)
+
+
+        # Plotting
+        fig, ax = plt.subplots(figsize=(5,3), dpi=150, tight_layout=True)
+
+        im = ax.imshow(
+            xefi_mag, 
+            origin='upper', 
+            extent=[aois[0],aois[-1],depth[-1],depth[0]], 
+            aspect='auto',
+            norm=plt.Normalize(cmin,cmax),
+            cmap=plt.cm.terrain
+        )
+        ax.set(xlabel='Incident angle [°]', ylabel= 'Film depth [nm]')
+        # ax.yaxis.set_minor_locator(MultipleLocator(10))  # from matplotlib.ticker import MultipleLocator
+        # ax.yaxis.set_major_locator(MultipleLocator(20))  # to set specific tick intervals
+
+        # Add colorbar
+        cbar = fig.colorbar(im, ax=ax)
+        cbar.set_label('XEFI', rotation=270, labelpad=10)
     
     return np.rad2deg(angresamp), z.flatten()/10, EE.T
 
