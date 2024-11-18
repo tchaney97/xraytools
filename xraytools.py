@@ -136,6 +136,87 @@ def calc_critical_angle(energy, stoichiometry, density, verbose=True):
     
     return critical_angle
 
+def calc_xefi(energy, 
+              film_stoichiometry, 
+              film_density, 
+              sub_stoichiometry, 
+              sub_density,
+              sampthick, 
+              incidentang, 
+              incidentang_extent):
+    """
+    Calculate the X-ray Electric Field Intensity (XEFI) throughout a thin film's depth. Assumes one material \
+    and zero surface roughness. 
+
+    Args:
+        energy (float): The energy of the X-ray beam in eV.
+        film_stoichiometry (str): The chemical formula of the film material.
+        film_density (float): The density of the film material in g/cm³.
+        sub_stoichiometry (str): The chemical formula of the substrate material.
+        sub_density (float): The density of the substrate material in g/cm³.
+        sampthick (float): Thickness of thin film in nm 
+        incidentang (float): Angle of incidence in degrees
+        incidentang_extent) (float): +/- extent around incidentang for range. (i.e. 0.9 ± 2, 0.7 to 0.11 range)
+
+    Returns:
+        tuple of numpy arrays: (aois, depth, xefi)
+            aois  : dimension/coordinate 1D array - angles of incidence
+            depth : dimension/coordinate 1D array - depth
+            xefi  : electric field data 2D array
+        
+    """
+    
+    delta1, beta1, attlen1 = xraydb.xray_delta_beta(film_stoichiometry, film_density, energy)
+    delta2, beta2, attlen2 = xraydb.xray_delta_beta(sub_stoichiometry, sub_density, energy)
+
+    beamdiverge = 0.01  # beam divergence in degrees
+    
+    # Constants
+    h = 6.626e-34      # Planck's constant (J*s)
+    c = 3e8            # Speed of light (m/s)
+    eV_to_J = 1.602e-19  # Conversion factor, eV to J
+    lambda_angstrom = (h * c) / (energy * eV_to_J) * 1e10  # Wavelength in Angstroms
+    sampthick_angstrom = sampthick * 10  # Convert thickness from nm to Angstroms
+    
+    # Resampling angles for around set angle and extent
+    incidentang = np.deg2rad(incidentang)
+    min_angle = np.min(incidentang) * 180 / np.pi - incidentang_extent
+    max_angle = np.max(incidentang) * 180 / np.pi + incidentang_extent
+    angresamp = np.linspace(min_angle, max_angle, 1000) * np.pi / 180
+    stepsize = np.min(np.diff(angresamp))
+    
+    # Define wavevectors
+    k0 = 2 * np.pi / lambda_angstrom
+    kz0 = k0 * np.sin(angresamp)
+    kc1 = np.sqrt(2 * delta1) * k0
+    kc2 = np.sqrt(2 * delta2) * k0
+    
+    # Wavevectors in film (kz1) and substrate (kz2)
+    p1 = 1/np.sqrt(2) * np.sqrt(np.sqrt((kz0**2-kc1**2)**2 + 4 * beta1**2 * k0**4) - kc1**2 + kz0**2)
+    q1 = 1/np.sqrt(2) * np.sqrt(np.sqrt((kz0**2-kc1**2)**2 + 4 * beta1**2 * k0**4) + kc1**2 - kz0**2)
+    kz1 = p1 + 1j * q1
+    
+    p2 = 1/np.sqrt(2) * np.sqrt(np.sqrt((kz0**2-kc2**2)**2 + 4 * beta2**2 * k0**4) - kc2**2 + kz0**2)
+    q2 = 1/np.sqrt(2) * np.sqrt(np.sqrt((kz0**2-kc2**2)**2 + 4 * beta2**2 * k0**4) + kc2**2 - kz0**2)
+    kz2 = p2 + 1j * q2
+    
+    # Reflection coefficients
+    r01 = (kz0 - kz1) / (kz0 + kz1)
+    r12 = (kz1 - kz2) / (kz1 + kz2)
+    
+    # Depth grid in film
+    z = np.linspace(0, sampthick_angstrom, 1000)
+    r01 = r01[:, None]
+    r12 = r12[:, None]
+    kz1 = kz1[:, None]
+    z = z[None, :]
+    
+    # Calculate electric field intensity
+    EE = (1 + r01) * (np.exp(1j * kz1 * z) + r12 * np.exp(1j * kz1 * (2 * sampthick_angstrom - z))) / \
+         (1 + r01 * r12 * np.exp(1j * 2 * kz1 * sampthick_angstrom))
+    
+    return np.rad2deg(angresamp), z.flatten()/10, EE.T
+
 def calc_critical_angle_table(energies, stoichiometries, densities):
     """
     Calculate and display a table of critical angles for multiple materials and energies.
