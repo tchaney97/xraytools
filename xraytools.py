@@ -155,8 +155,7 @@ def calc_xefi(energy,
         sub_stoichiometry (str): The chemical formula of the substrate material.
         sub_density (float): The density of the substrate material in g/cm³.
         sampthick (float): Thickness of thin film in nm 
-        incidentang (float): Angle of incidence in degrees
-        incidentang_extent) (float): +/- extent around incidentang for range. (i.e. 0.9 ± 2, 0.7 to 0.11 range)
+        incidentangs (Nx1 numpy array of floats): incident angles to evaluate XEFI in degrees 
 
     Returns:
         tuple of numpy arrays: (aois, depth, xefi)
