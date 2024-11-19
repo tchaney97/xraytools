@@ -14,13 +14,14 @@ Here are some example outputs from xraytools:
 - **Compute critical angles** for total external reflection.
 - **Find X-ray absorption edges** for elements.
 - **Calculate attenuation coefficients** and **transmission** through various materials and solutions.
+- **Calculate X-ray electric field intensity** throughout the film depth for varying incident angles.
 
 ## Installation
 
 Clone the repository and import the module into your Python project:
 
 ```bash
-git clone https://github.com/yourusername/xraytools.git
+git clone https://github.com/tchaney97/xraytools.git
 ```
 
 ## Requirements
@@ -162,6 +163,23 @@ xraytools.calc_solution_transmission(
 ```
 
 Calculates the transmission of X-rays through a solution in a capillary, accounting for both solvent and solute contributions.
+
+### 15. `calc_xefi`
+
+```python
+xraytools.calc_xefi(
+    energy = 10000, 
+    film_stoichiometry = 'C2H4', 
+    film_density = 0.9, 
+    sub_stoichiometry = 'Si', 
+    sub_density = '2.33',
+    sampthick = 180, 
+    incidentangs = np.linspace(0.05,0.2,500),
+    plot=True)
+)
+```
+
+Calculate the X-ray Electric Field Intensity (XEFI) throughout a thin film's depth. Assumes one material and zero surface roughness. 
 
 ## License
 
