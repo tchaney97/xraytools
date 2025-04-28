@@ -136,7 +136,7 @@ def calc_critical_angle(energy, stoichiometry, density, verbose=True):
     
     return critical_angle
 
-def calc_xefi(energy, 
+def calc_xefi(energy,
               film_stoichiometry, 
               film_density, 
               sub_stoichiometry, 
@@ -147,6 +147,8 @@ def calc_xefi(energy,
     """
     Calculate the X-ray Electric Field Intensity (XEFI) throughout a thin film's depth. Assumes one material \
     and zero surface roughness. 
+
+    Adapted from: https://doi.org/10.1107/S1600576720005476
 
     Args:
         energy (float): The energy of the X-ray beam in eV.
@@ -161,14 +163,12 @@ def calc_xefi(energy,
         tuple of numpy arrays: (aois, depth, xefi)
             aois  : dimension/coordinate 1D array - angles of incidence
             depth : dimension/coordinate 1D array - depth
-            xefi  : electric field data 2D array
+            xefi  : electric field intensity 2D array
         
     """
     
     delta1, beta1, attlen1 = xraydb.xray_delta_beta(film_stoichiometry, film_density, energy)
     delta2, beta2, attlen2 = xraydb.xray_delta_beta(sub_stoichiometry, sub_density, energy)
-
-    beamdiverge = 0.01  # beam divergence in degrees
     
     # Constants
     h = 6.626e-34      # Planck's constant (J*s)
@@ -205,25 +205,25 @@ def calc_xefi(energy,
     kz1 = kz1[:, None]
     z = z[None, :]
     
-    # Calculate electric field intensity
+    # Calculate electric field
     EE = (1 + r01) * (np.exp(1j * kz1 * z) + r12 * np.exp(1j * kz1 * (2 * sampthick_angstrom - z))) / \
          (1 + r01 * r12 * np.exp(1j * 2 * kz1 * sampthick_angstrom))
     
     if plot:
-        xefi_mag = np.abs(EE.T)  # Electric field is complex, get magnitude
+        xefi_int = np.abs(EE.T)**2  # Electric field is complex. Norm square to get intensity
         depth = z.flatten()/10
         aois = np.rad2deg(angresamp)
 
         # Quick plot check 
-        cmin = np.quantile(xefi_mag, 0.05)
-        cmax = np.quantile(xefi_mag, 1)
+        cmin = np.quantile(xefi_int, 0.05)
+        cmax = np.quantile(xefi_int, 1)
 
 
         # Plotting
         fig, ax = plt.subplots(figsize=(5,3), dpi=150, tight_layout=True)
 
         im = ax.imshow(
-            xefi_mag, 
+            xefi_int, 
             origin='upper', 
             extent=[aois[0],aois[-1],depth[-1],depth[0]], 
             aspect='auto',
@@ -238,7 +238,7 @@ def calc_xefi(energy,
         cbar = fig.colorbar(im, ax=ax)
         cbar.set_label('XEFI', rotation=270, labelpad=10)
     
-    return np.rad2deg(angresamp), z.flatten()/10, EE.T
+    return np.rad2deg(angresamp), z.flatten()/10, np.abs(EE.T)**2
 
 def calc_critical_angle_table(energies, stoichiometries, densities):
     """
